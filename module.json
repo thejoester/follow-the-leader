@@ -32,7 +32,8 @@
 		"requires": [
 			{
 				"id": "routinglib",
-				"type": "module"
+				"type": "module",
+				"manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-routinglib/master/module.json"
 			}
 		]
 	}
