@@ -28,13 +28,29 @@ Hooks.once("routinglib.ready", () => {
 				});
 
 				if (result?.path) {
-					for (const step of result.path) {
+					const followDistance = canvas.grid.size * 2; // Stay 2 tiles behind
+					let walked = 0;
+
+					for (let i = 0; i < result.path.length; i++) {
+						const step = result.path[i];
+						if (walked + canvas.grid.size > result.cost - followDistance) break;
 						await follower.document.update({ x: step.x, y: step.y }, { by_following: true });
-						await foundry.utils.sleep(100); // adjust for pacing
+						await foundry.utils.sleep(100);
+						walked += canvas.grid.size;
 					}
 				}
 			} catch (e) {
 				console.warn(`Follow the Leader | Failed to calculate path for follower ${follower.name}:`, e);
+			}
+		}
+	});
+
+	Hooks.on("combatStart", () => {
+		if (!game.user.isGM) return;
+		for (const token of canvas.tokens.placeables) {
+			if (token.document.getFlag("follow-the-leader", "following")) {
+				token.document.unsetFlag("follow-the-leader", "following");
+				ui.notifications.info(`${token.name} stopped following (combat started)`);
 			}
 		}
 	});
