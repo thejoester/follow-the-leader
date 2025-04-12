@@ -1,0 +1,39 @@
+{
+	"id": "follow-the-leader",
+	"title": "Follow the Leader",
+	"description": "Set token(s) to follow another token, using routinglib to generate safe path.",
+	"version": "0.0.1",
+	"compatibility": {
+		"minimum": "12",
+		"verified": "12"
+	},
+	"esmodules": [
+		"scripts/main.js"
+	],
+	"url": "https://github.com/thejoester/follow-the-leader/",
+	"manifest": "https://github.com/thejoester/follow-the-leader/releases/latest/download/module.json",
+	"download": "https://github.com/thejoester/follow-the-leader/releases/download/0.0.1/follow-the-leader.zip",
+	"readme": "https://github.com/thejoester/follow-the-leader/blob/master/README.md",
+	"changelog": "https://github.com/thejoester/follow-the-leader/blob/master/CHANGELOG.md",
+	"license": "https://github.com/thejoester/follow-the-leader/blob/master/LICENSE.txt",
+	"bugs": "https://github.com/thejoester/follow-the-leader/issues",
+	"flags": {
+		"allowBugReporter": true
+	},
+	"authors": [
+		{
+			"name": "The Joester",
+			"discord": "thejoester",
+			"url": "https://github.com/thejoester",
+			"flags": {}
+		}
+	],
+	"relationships": {
+		"requires": [
+			{
+				"id": "routinglib",
+				"type": "module"
+			}
+		]
+	}
+}
