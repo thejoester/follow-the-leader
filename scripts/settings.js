@@ -1,132 +1,104 @@
 console.log(`%cFollow the Leader | settings.js loaded`, "color: BurlyWood; font-weight: bold;");
-export function debugLog(intLogType, stringLogMsg, objObject = null) {
-	
-	// Get Timestamps
-	const now = new Date();
-	const timestamp = now.toTimeString().split(' ')[0]; // "HH:MM:SS"
-	
-	// Handle the case where the first argument is a string
-	if (typeof intLogType === "string") {
-		objObject = stringLogMsg; // Shift arguments
-		stringLogMsg = intLogType;
-		intLogType = 1; // Default log type to 'all'
-	}
-	const debugLevel = game.settings.get("pf2e-alchemist-remaster-ducttape", "debugLevel");
+import { LT } from './localization.js';
 
-	// Map debugLevel setting to numeric value for comparison
+export function debugLog(intLogType, stringLogMsg, objObject = null) {
+	const now = new Date();
+	const timestamp = now.toTimeString().split(' ')[0];
+
+	if (typeof intLogType === "string") {
+		objObject = stringLogMsg;
+		stringLogMsg = intLogType;
+		intLogType = 1;
+	}
+	const debugLevel = game.settings.get("follow-the-leader", "debugLevel");
+
 	const levelMap = {
 		"none": 4,
 		"error": 3,
 		"warn": 2,
 		"all": 1
 	};
-
-	const currentLevel = levelMap[debugLevel] || 4; // Default to 'none' if debugLevel is undefined
-
-	// Check if the log type should be logged based on the current debug level
+	const currentLevel = levelMap[debugLevel] || 4;
 	if (intLogType < currentLevel) return;
 
-	// Capture stack trace to get file and line number
 	const stack = new Error().stack.split("\n");
 	let fileInfo = "Unknown Source";
 	for (let i = 2; i < stack.length; i++) {
 		const line = stack[i].trim();
-		const fileInfoMatch = line.match(/(\/[^)]+):(\d+):(\d+)/); // Match file path and line number
-		if (fileInfoMatch) {
-			const [, filePath, lineNumber] = fileInfoMatch;
-			const fileName = filePath.split("/").pop(); // Extract just the file name
-			// Ensure the file is one of the allowed files
-			const allowedFiles = ["main.js"];
-			if (allowedFiles.includes(fileName)) {
-				fileInfo = `${fileName}:${lineNumber}`;
+		const match = line.match(/(\/[^)]+):(\d+):(\d+)/);
+		if (match) {
+			const [, path, lineNum] = match;
+			const fileName = path.split("/").pop();
+			if (["main.js", "settings.js"].includes(fileName)) {
+				fileInfo = `${fileName}:${lineNum}`;
 				break;
 			}
 		}
 	}
 
-	// Prepend the file and line info to the log message
-	const formattedLogMsg = `[${fileInfo}] ${stringLogMsg}`;
-	
+	const formatted = `[${fileInfo}] ${stringLogMsg}`;
+	const style = "color: BurlyWood; font-weight: bold;";
+	const warnStyle = "color: orange; font-weight: bold;";
+	const errStyle = "color: red; font-weight: bold;";
+
 	if (objObject) {
-		switch (intLogType) {
-			case 1: // Info/Log (all)
-				console.log(`%cFollow the Leader[${timestamp}] | ${formattedLogMsg}`, "color: BurlyWood; font-weight: bold;", objObject);
-				break;
-			case 2: // Warning
-				console.log(`%cFollow the Leader[${timestamp}] | WARNING: ${formattedLogMsg}`, "color: orange; font-weight: bold;", objObject);
-				break;
-			case 3: // Critical/Error
-				console.log(`%cFollow the Leader[${timestamp}] | ERROR: ${formattedLogMsg}`, "color: red; font-weight: bold;", objObject);
-				break;
-			default:
-				console.log(`%cFollow the Leader[${timestamp}] | ${formattedLogMsg}`, "color: BurlyWood; font-weight: bold;", objObject);
-		}
+		if (intLogType === 3) console.log(`%cFollow the Leader[${timestamp}] | ERROR: ${formatted}`, errStyle, objObject);
+		else if (intLogType === 2) console.log(`%cFollow the Leader[${timestamp}] | WARNING: ${formatted}`, warnStyle, objObject);
+		else console.log(`%cFollow the Leader[${timestamp}] | ${formatted}`, style, objObject);
 	} else {
-		switch (intLogType) {
-			case 1: // Info/Log (all)
-				console.log(`%cFollow the Leader[${timestamp}] | ${formattedLogMsg}`, "color: BurlyWood; font-weight: bold;");
-				break;
-			case 2: // Warning
-				console.log(`%cFollow the Leader[${timestamp}] | WARNING: ${formattedLogMsg}`, "color: orange; font-weight: bold;");
-				break;
-			case 3: // Critical/Error
-				console.log(`%cFollow the Leader[${timestamp}] | ERROR: ${formattedLogMsg}`, "color: red; font-weight: bold;");
-				break;
-			default:
-				console.log(`%cFollow the Leader[${timestamp}] | ${formattedLogMsg}`, "color: BurlyWood; font-weight: bold;");
-		}
+		if (intLogType === 3) console.log(`%cFollow the Leader[${timestamp}] | ERROR: ${formatted}`, errStyle);
+		else if (intLogType === 2) console.log(`%cFollow the Leader[${timestamp}] | WARNING: ${formatted}`, warnStyle);
+		else console.log(`%cFollow the Leader[${timestamp}] | ${formatted}`, style);
 	}
 }
 
 export function getSetting(settingName, returnIfError = false) {
-    // Validate the setting name
-    if (typeof settingName !== "string" || settingName.trim() === "") {
-        debugLog(3, `Invalid setting name provided: ${settingName}`);
-        return returnIfError; // Return undefined or a default value
-    }
+	if (typeof settingName !== "string" || settingName.trim() === "") {
+		debugLog(3, `Invalid setting name provided: ${settingName}`);
+		return returnIfError;
+	}
 
-    // Check if the setting is registered
-    if (!game.settings.settings.has(`pf2e-alchemist-remaster-ducttape.${settingName}`)) {
-        debugLog(3, `Setting "${settingName}" is not registered.`);
-        return returnIfError; // Return undefined or a default value
-    }
+	if (!game.settings.settings.has(`follow-the-leader.${settingName}`)) {
+		debugLog(3, `Setting "${settingName}" is not registered.`);
+		return returnIfError;
+	}
 
-    try {
-        // Attempt to retrieve the setting value
-        const value = game.settings.get("pf2e-alchemist-remaster-ducttape", settingName);
-        //debugLog(1, `Successfully retrieved setting "${settingName}":`, value);
-        return value;
-    } catch (error) {
-        // Log the error and return undefined or a default value
-        debugLog(3, `Failed to get setting "${settingName}":`, error);
-        return returnIfError;
-    }
+	try {
+		return game.settings.get("follow-the-leader", settingName);
+	} catch (error) {
+		debugLog(3, `Failed to get setting "${settingName}":`, error);
+		return returnIfError;
+	}
 }
-
 
 Hooks.once("init", () => {
 	
-/*
-	Debugging
-*/
-	// Register debugLevel setting
-	game.settings.register("pf2e-alchemist-remaster-ducttape", "debugLevel", {
-		name: game.i18n.localize("PF2E_ALCHEMIST_REMASTER_DUCTTAPE.SETTING_DEBUG_LEVEL"),
-		hint: game.i18n.localize("PF2E_ALCHEMIST_REMASTER_DUCTTAPE.SETTING_DEBUG_LEVEL_HINT"),
-		scope: "world",
-		config: true,
-		type: String,
-		choices: {
-			"none": game.i18n.localize("PF2E_ALCHEMIST_REMASTER_DUCTTAPE.SETTING_DEBUG_NONE"),
-			"error": game.i18n.localize("PF2E_ALCHEMIST_REMASTER_DUCTTAPE.SETTING_DEBUG_ERROR"),
-			"warn": game.i18n.localize("PF2E_ALCHEMIST_REMASTER_DUCTTAPE.SETTING_DEBUG_WARN"),
-			"all": game.i18n.localize("PF2E_ALCHEMIST_REMASTER_DUCTTAPE.SETTING_DEBUG_ALL")
-		},
-		default: "all", // Default to no logging
-		requiresReload: false
-	});
 
-	// Log debug status
-	const debugLevel = game.settings.get("pf2e-alchemist-remaster-ducttape", "debugLevel");
-	console.log(`%cPF2E Alchemist Remaster Duct Tape | Debugging Level: ${debugLevel}`,"color: aqua; font-weight: bold;");
+game.settings.register("follow-the-leader", "stopOnManualMove", {
+	name: LT.STOP_ON_MANUAL_MOVE_NAME,
+	hint: LT.STOP_ON_MANUAL_MOVE_HINT,
+	scope: "client",
+	config: true,
+	default: true,
+	type: Boolean
+});
+
+game.settings.register("follow-the-leader", "debugLevel", {
+	name: LT.DEBUG_LEVEL_NAME,
+	hint: LT.DEBUG_LEVEL_HINT,
+	scope: "world",
+	config: true,
+	type: String,
+	choices: {
+		"none": LT.DEBUG_LEVEL_NONE,
+		"error": LT.DEBUG_LEVEL_ERROR,
+		"warn": LT.DEBUG_LEVEL_WARN,
+		"all": LT.DEBUG_LEVEL_ALL
+	},
+	default: "all",
+	requiresReload: false
+});
+const level = game.settings.get("follow-the-leader", "debugLevel");
+console.log(`%cFollow the Leader | Debugging Level: ${level}`, "color: BurlyWood; font-weight: bold;");
+
 });

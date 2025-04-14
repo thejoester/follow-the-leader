@@ -1,8 +1,9 @@
-import { debugLog } from './settings.js';
+import { debugLog, getSetting } from './settings.js';
+import { LT } from './localization.js';
 
 /*
 Follow the Leader
-https://github.com/yourname/follow-the-leader
+https://github.com/thejoester/follow-the-leader
 */
 
 function isInSceneBounds(x, y) {
@@ -28,14 +29,11 @@ function getSnapPointForToken(gridX, gridY, token) {
 	return { x, y };
 }
 
-// Internal tracking for movement loop
 const tokensMovedByFollow = new Set();
-let isRoutingInProgress = false;
 
 Hooks.once("routinglib.ready", () => {
 	debugLog("routinglib is ready");
 
-	// Map from token.id => token.id they're following
 	function buildFollowMap() {
 		const map = new Map();
 		for (const token of canvas.tokens.placeables) {
@@ -45,14 +43,12 @@ Hooks.once("routinglib.ready", () => {
 		return map;
 	}
 
-	// Get list of token ids that are following the given tokenId
 	function getFollowers(followMap, leaderId) {
 		return [...followMap.entries()]
 			.filter(([followerId, follows]) => follows === leaderId)
 			.map(([followerId]) => followerId);
 	}
 
-	// Recursively move all followers of the given leader
 	async function moveFollowersRecursive(leaderId, originalPositions, followMap, visited = new Set()) {
 		const followers = getFollowers(followMap, leaderId);
 		for (const followerId of followers) {
@@ -86,6 +82,7 @@ Hooks.once("routinglib.ready", () => {
 				for (const step of result.path) {
 					const snap = getSnapPointForToken(step.x, step.y, follower);
 					debugLog(`'${follower.name}' teleporting to`, snap);
+					tokensMovedByFollow.add(follower.id);
 					await follower.document.update({ x: Math.round(snap.x), y: Math.round(snap.y) }, { animate: false });
 					await new Promise(resolve => setTimeout(resolve, 100));
 				}
@@ -93,14 +90,32 @@ Hooks.once("routinglib.ready", () => {
 				debugLog(3, `Routing error for ${follower?.name}:`, err);
 			}
 
-			// Recursively move their followers
 			await moveFollowersRecursive(followerId, originalPositions, followMap, visited);
 		}
 	}
 
-	// Hook into token updates
 	Hooks.on("updateToken", async (token, change, options, userId) => {
-		if (!game.user.isGM) return; // ensure movement code is only run from GM
+		const tokenDoc = token.document ?? token;
+
+		if (tokensMovedByFollow.has(tokenDoc.id)) {
+			tokensMovedByFollow.delete(tokenDoc.id);
+			return;
+		}
+
+		const wasFollowing = tokenDoc.getFlag("follow-the-leader", "following");
+		const stopOnManualMove = getSetting("stopOnManualMove", false);
+		debugLog(`stopOnManualMove: ${stopOnManualMove} | wasFollowing: ${wasFollowing}`);
+
+		if (stopOnManualMove && wasFollowing && (change.x !== undefined || change.y !== undefined)) {
+			if (userId === game.user.id) {
+				debugLog(`${token.name} stopped following (moved manually).`);
+				await tokenDoc.unsetFlag("follow-the-leader", "following");
+				ui.notifications.info(LT.stopFollowingManual(token.name, canvas.tokens.get(wasFollowing)?.name ?? "their leader"));
+				return;
+			}
+		}
+
+		if (!game.user.isGM) return;
 		if (!token || (!change.x && !change.y)) return;
 
 		const gridSize = canvas.grid.size;
@@ -115,41 +130,50 @@ Hooks.once("routinglib.ready", () => {
 		const followMap = buildFollowMap();
 		debugLog("Built follower map.", followMap);
 
-		await moveFollowersRecursive(token.id, originalPositions, followMap);
+		await moveFollowersRecursive(tokenDoc.id, originalPositions, followMap);
 	});
 
-
-	// Clear all follow flags when combat starts
 	Hooks.on("combatStart", () => {
 		if (!game.user.isGM) return;
 		for (const token of canvas.tokens.placeables) {
 			if (token.document.getFlag("follow-the-leader", "following")) {
 				token.document.unsetFlag("follow-the-leader", "following");
-				ui.notifications.info(`${token.name} stopped following (combat started)`);
+				ui.notifications.info(LT.stopFollowingCombat(token.name));
 			}
 		}
 	});
 });
 
-// Toggle follow mode with 'F' key between selected and hovered tokens
-Hooks.on("ready", () => {
-	debugLog("Ready");
+Hooks.once("init", () => {
+	debugLog("Init");
 
-	window.addEventListener("keydown", event => {
-		if (event.key !== "f" || !canvas.tokens.controlled.length) return;
+	game.keybindings.register("follow-the-leader", "toggle-follow", {
+		name: game.i18n.localize(LT.TOGGLE_FOLLOW_NAME),
+		hint: game.i18n.localize(LT.TOGGLE_FOLLOW_HINT),
+		onDown: () => {
+			const selected = canvas.tokens.controlled[0];
+			const hovered = canvas.tokens.placeables.find(t => t.hover);
 
-		const selected = canvas.tokens.controlled[0];
-		const hovered = canvas.tokens.placeables.find(t => t.hover);
-		if (!hovered || !selected) return;
+			if (!selected || !hovered) {
+				ui.notifications.warn(game.i18n.localize(LT.WARNING_SELECT_AND_HOVER));
+				return false;
+			}
 
-		const currentFollowId = selected.document.getFlag("follow-the-leader", "following");
+			const currentFollowId = selected.document.getFlag("follow-the-leader", "following");
 
-		if (currentFollowId === hovered.id || hovered.id === selected.id) {
-			selected.document.unsetFlag("follow-the-leader", "following");
-			ui.notifications.info(`${selected.name} stopped following`);
-		} else {
-			selected.document.setFlag("follow-the-leader", "following", hovered.id);
-			ui.notifications.info(`${selected.name} is now following ${hovered.name}`);
-		}
+			if (currentFollowId === hovered.id || hovered.id === selected.id) {
+				selected.document.unsetFlag("follow-the-leader", "following");
+				ui.notifications.info(LT.stopFollowing(selected.name));
+				debugLog(`${selected.name} stopped following.`);
+			} else {
+				selected.document.setFlag("follow-the-leader", "following", hovered.id);
+				ui.notifications.info(LT.START_FOLLOWING(selected.name, hovered.name));
+				debugLog(`${selected.name} is now following ${hovered.name}.`);
+			}
+			return true;
+		},
+		restricted: false,
+		editable: [{ key: "KeyF" }],
+		precedence: CONST.KEYBINDING_PRECEDENCE.NORMAL
 	});
 });
