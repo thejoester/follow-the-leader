@@ -72,5 +72,4 @@ You can find and import these macros via the **Compendium** provided by the modu
 
 ## 🐛 Bugs & Feedback
 
-Found an issue or have suggestions?  
-Please open an issue on [GitHub](https://github.com/thejoester/follow-the-leader/issues).
+Found an issue or have suggestions? Please open an issue on [GitHub](https://github.com/thejoester/follow-the-leader/issues).
