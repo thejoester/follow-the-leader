@@ -6,21 +6,21 @@ A Foundry VTT module that allows one token to follow another using advanced path
 
 ## 🧭 Features
 
-- 🎯 Select a token, hover over another, and press `F` — the selected token will begin following the target.
-- Press `F` again, or hover over the follower and press `F`, to cancel following.
 - 🧠 Utilizes [routinglib](https://foundryvtt.com/packages/routinglib) for intelligent, wall-aware pathfinding.
+- 🎯 Select a token, hover over another, and press `F` — the selected token will begin following the target.
+- 🎯 Press `F` again, or hover over the follower and press `F`, to cancel following.
+- ⛔ Automatically stops following when following token moves manually.
 - ⛔ Automatically stops following when combat begins.
+- 🛠️ Configurable settings UI
 
 ---
 
 ## 🚧 Feature Roadmap
 
-- 🚶 Maintain a configurable distance (default: 3 tiles) behind the leader.
-- 🗨️ Send chat emotes when line of sight is lost or regained.
-- 🛠️ Configurable settings UI
+- 🚶 Maintain a configurable distance behind the leader.
 - ➕ Resume following after combat
 - 🧩 Additional pathing options and LOS behaviors
-- Smoother animated movement rather than "teleporting" tokens. 
+- 🚶 Smoother animated movement rather than "teleporting" tokens. 
 
 ---
 
