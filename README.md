@@ -13,6 +13,9 @@ A Foundry VTT module that allows one token to follow another using advanced path
 - ⛔ Automatically stops following when combat begins.
 - 🛠️ Configurable settings UI
 
+https://github.com/user-attachments/assets/1ef3c858-401f-4d08-ab4a-c770fb7a4834
+
+
 ---
 
 ## 🚧 Feature Roadmap
