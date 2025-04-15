@@ -13,6 +13,9 @@ A Foundry VTT module that allows one token to follow another using advanced path
 - ⛔ Automatically stops following when combat begins.
 - 🛠️ Configurable settings UI
 
+https://github.com/user-attachments/assets/1ef3c858-401f-4d08-ab4a-c770fb7a4834
+
+
 ---
 
 ## 🚧 Feature Roadmap
@@ -69,5 +72,4 @@ You can find and import these macros via the **Compendium** provided by the modu
 
 ## 🐛 Bugs & Feedback
 
-Found an issue or have suggestions?  
-Please open an issue on [GitHub](https://github.com/thejoester/follow-the-leader/issues).
+Found an issue or have suggestions? Please open an issue on [GitHub](https://github.com/thejoester/follow-the-leader/issues).
