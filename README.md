@@ -2,6 +2,9 @@
 
 A Foundry VTT module that allows one token to follow another using advanced pathfinding powered by [`routinglib`](https://github.com/League-of-Foundry-Developers/routinglib). Ideal for automating NPC companions, minions, or party movement.
 
+> [!CAUTION]
+> This module is not functioning in Foundry v13. The routinglib module this module relied on has not been updated and has not been updated since v11 so I am not sure that it will be updated. 
+
 ---
 
 ## 🧭 Features
